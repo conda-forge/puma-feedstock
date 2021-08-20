@@ -10,7 +10,7 @@ source:
   sha256: 42bdca8139935fbe14ad5e8bc1b1bb996e404d26618ebd5d1e0a113a15d71405
 
 build:
-  number: 0
+  number: 1
   skip: True  # [win]
 
 requirements:
@@ -43,7 +43,7 @@ requirements:
     - {{ pin_compatible('numpy') }}
     - scipy
     - scikit-image
-    - matplotlib
+    - matplotlib-base
     - pyevtk
     - fenics-dolfin
     - pyvista
