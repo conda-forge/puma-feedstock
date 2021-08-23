@@ -6,8 +6,8 @@ package:
   version: {{ version }}
 
 source:
-  url: https://gitlab.com/jcfergus/puma-dev/-/archive/v{{ version }}/puma-dev-v{{ version }}.tar.gz
-  sha256: 42bdca8139935fbe14ad5e8bc1b1bb996e404d26618ebd5d1e0a113a15d71405
+  url: https://github.com/nasa/puma/archive/refs/tags/v{{ version }}.tar.gz
+  sha256: b5d96f19fba3e447a92a50e023d81e800fe0ce8975b08dd8a1180dfdb7f24b66
 
 build:
   number: 1
