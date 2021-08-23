@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/nasa/puma/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 721da3440197abb7c30b698d78f6402ed2897af3f8f48294a1e6ae31cb12dc53
+  sha256: dfeb1eebb1959e0049458c46778f156221f470779b17babb0a89dd8bf19dda8a
 
 build:
   number: 1
@@ -43,6 +43,9 @@ requirements:
     - {{ pin_compatible('numpy') }}
     - scipy
     - scikit-image
+    # because of bug in scikit, we need this dependency
+    # might be able to remove it in the future
+    - pooch <=1.4.0
     - matplotlib-base
     - pyevtk
     - fenics-dolfin
