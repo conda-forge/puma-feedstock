@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/nasa/puma/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: b5d96f19fba3e447a92a50e023d81e800fe0ce8975b08dd8a1180dfdb7f24b66
+  sha256: 721da3440197abb7c30b698d78f6402ed2897af3f8f48294a1e6ae31cb12dc53
 
 build:
   number: 1
