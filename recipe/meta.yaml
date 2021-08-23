@@ -53,7 +53,7 @@ test:
     - TexGen.Core
     - pumapy
   source_files:
-    - python/tests/*.py
+    - python/test/*.py
 
 about:
   home: https://github.com/nasa/puma
