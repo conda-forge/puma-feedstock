@@ -10,5 +10,5 @@ pumaGUI &
 killall pumaGUI
 
 echo "Testing pumapy"
-cd python/tests
+cd python/test
 python -m unittest test_workspace.TestWorkspace

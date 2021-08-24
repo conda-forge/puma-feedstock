@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/nasa/puma/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: b5d96f19fba3e447a92a50e023d81e800fe0ce8975b08dd8a1180dfdb7f24b66
+  sha256: dfeb1eebb1959e0049458c46778f156221f470779b17babb0a89dd8bf19dda8a
 
 build:
   number: 1
@@ -43,6 +43,9 @@ requirements:
     - {{ pin_compatible('numpy') }}
     - scipy
     - scikit-image
+    # because of bug in scikit, we need this dependency
+    # might be able to remove it in the future
+    - pooch <=1.4.0
     - matplotlib-base
     - pyevtk
     - fenics-dolfin
@@ -53,7 +56,7 @@ test:
     - TexGen.Core
     - pumapy
   source_files:
-    - python/tests/*.py
+    - python/test/*.py
 
 about:
   home: https://github.com/nasa/puma

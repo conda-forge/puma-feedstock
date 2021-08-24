@@ -11,7 +11,6 @@ cmake -D CONDA_PREFIX=$PREFIX \
       "$SRC_DIR"/cpp
 make -j$CPU_COUNT
 make install
-rm ${PREFIX}/bin/pumaX_examples
 rm ${PREFIX}/bin/pumaX_main
 
 
