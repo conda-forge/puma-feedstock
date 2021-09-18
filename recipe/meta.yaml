@@ -1,5 +1,5 @@
 {% set name = "puma" %}
-{% set version = "3.0.1" %}
+{% set version = "3.1.0" %}
 
 package:
   name: {{ name|lower }}
@@ -7,16 +7,16 @@ package:
 
 source:
   url: https://github.com/nasa/puma/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 0aca8e72f4ef011cb2d2a0a3fe1ceb54af057e2576546eb20368cc61c171201f
+  sha256: 23b82de2005d1f046ef7b4857491e9364d92802c965c18b00f0e98f0b5aafc82
 
 build:
   number: 0
-  skip: True  # [win]
+  skip: true  # [py<37]
 
 requirements:
   build:
-    - {{ compiler('c') }}
-    - {{ compiler('cxx') }}
+    - {{ compiler('c') }}  # [not win]
+    - {{ compiler('cxx') }}  # [not win]
     - {{ cdt('mesa-libgl-devel') }}  # [linux]
     - {{ cdt('mesa-dri-drivers') }}  # [linux]
     - {{ cdt('libselinux') }}  # [linux]
@@ -25,35 +25,33 @@ requirements:
     - {{ cdt('libxext') }}     # [linux]
     - libgomp  # [linux]
     - llvm-openmp  # [osx]
-    - cmake >=3.11.0
-    - make
-    - swig
+    - cmake >=3.11.0  # [not win]
+    - make  # [not win]
+    - swig  # [not win]
   host:
     - xorg-libxfixes  # [linux]
     - python
     - pip
     - setuptools
     - numpy
-    - eigen
-    - fftw
-    - libtiff
-    - qt
+    - eigen  # [not win]
+    - fftw  # [not win]
+    - libtiff  # [not win]
+    - qt  # [not win]
   run:
     - python
     - {{ pin_compatible('numpy') }}
     - scipy
     - scikit-image
-    # because of bug in scikit, we need this dependency
-    # might be able to remove it in the future
-    - pooch <=1.4.0
     - matplotlib-base
     - pyevtk
-    - fenics-dolfin
     - pyvista
+    - vtk
+    - scikit-umfpack  # [not win]
 
 test:
   imports:
-    - TexGen.Core
+    - TexGen.Core  # [not win]
     - pumapy
   source_files:
     - python/test/*.py
@@ -61,22 +59,29 @@ test:
 about:
   home: https://github.com/nasa/puma
   license: NASA-1.3
-  license_file: 
+  license_file:
     - LICENSE.txt
     - install/TexGen/LICENSE.txt
     - gui/src/Utilities/qcustomplot/GPL.txt
-  summary: 'A package to compute material properties from micro-CT data.'
+  summary: A package to compute material properties from micro-CT data.
   description: |
-    The Porous Microstructure Analysis (PuMA) software has been developed in order to 
-    compute effective material properties and perform material response simulations on 
-    digitized microstructures of porous media. PuMA is able to import digital three-dimensional 
-    images obtained from X-ray microtomography or to generate artificial microstructures 
-    that mimic real materials. PuMA also provides a module for interactive 3D visualizations. 
-    Version 3 includes modules to compute simple morphological properties such as porosity, 
-    volume fractions, pore diameter, and specific surface area. Additional capabilities include 
-    the determination of effective thermal and electrical conductivity (including the ability 
-    to simulate local anisotropy), effective diffusivity and tortuosity from the continuum to 
-    the rarefied regime, and techniques to determine local material orientation.
+    The Porous Microstructure Analysis (PuMA) software has been developed to
+    compute effective material properties and perform material response simulations on
+    digitized microstructures of porous media. PuMA is able to import digital three-dimensional
+    images obtained from X-ray microtomography or to generate artificial microstructures
+    that mimic real materials. PuMA also provides a module for interactive 3D visualizations.
+    Version 3 includes modules to compute simple morphological properties such as porosity,
+    volume fractions, pore diameter, and specific surface area. Additional capabilities include
+    the determination of effective thermal and electrical conductivity (both radiative and solid conduction - 
+    including the ability to simulate local anisotropy for the latter); effective diffusivity and 
+    tortuosity from the continuum to the rarefied regime; techniques to determine the local material orientation, 
+    as well as the mechanical properties (elasticity coefficient), and the permeability of a material.
+    Some examples of microstructures that have been run in the past are shown in the pictures below,
+    together with PuMA's software architecture schematic.
+    <p align="center">
+      <img src="https://github.com/nasa/puma/raw/main/doc/source/puma_description.png" width="100%"></img>
+    </p>
+
   doc_url: https://puma-nasa.readthedocs.io/
   dev_url: https://gitlab.com/jcfergus/puma-dev
 
