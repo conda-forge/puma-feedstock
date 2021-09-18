@@ -46,6 +46,7 @@ requirements:
     - matplotlib-base
     - pyevtk
     - pyvista
+    - vtk
     - scikit-umfpack  # [not win]
 
 test:

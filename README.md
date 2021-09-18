@@ -13,16 +13,22 @@ Development: https://gitlab.com/jcfergus/puma-dev
 
 Documentation: https://puma-nasa.readthedocs.io/
 
-The Porous Microstructure Analysis (PuMA) software has been developed in order to
+The Porous Microstructure Analysis (PuMA) software has been developed to
 compute effective material properties and perform material response simulations on
 digitized microstructures of porous media. PuMA is able to import digital three-dimensional
 images obtained from X-ray microtomography or to generate artificial microstructures
 that mimic real materials. PuMA also provides a module for interactive 3D visualizations.
 Version 3 includes modules to compute simple morphological properties such as porosity,
 volume fractions, pore diameter, and specific surface area. Additional capabilities include
-the determination of effective thermal and electrical conductivity (including the ability
-to simulate local anisotropy), effective diffusivity and tortuosity from the continuum to
-the rarefied regime, and techniques to determine local material orientation.
+the determination of effective thermal and electrical conductivity (both radiative and solid conduction -
+including the ability to simulate local anisotropy for the latter); effective diffusivity and
+tortuosity from the continuum to the rarefied regime; techniques to determine the local material orientation,
+as well as the mechanical properties (elasticity coefficient), and the permeability of a material.
+Some examples of microstructures that have been run in the past are shown in the pictures below,
+together with PuMA's software architecture schematic.
+<p align="center">
+  <img src="https://github.com/nasa/puma/raw/main/doc/source/puma_description.png" width="100%"></img>
+</p>
 
 
 Current build status
@@ -43,13 +49,6 @@ Current build status
         <table>
           <thead><tr><th>Variant</th><th>Status</th></tr></thead>
           <tbody><tr>
-              <td>linux_64_numpy1.18python3.6.____cpython</td>
-              <td>
-                <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=13678&branchName=master">
-                  <img src="https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/puma-feedstock?branchName=master&jobName=linux&configuration=linux_64_numpy1.18python3.6.____cpython" alt="variant">
-                </a>
-              </td>
-            </tr><tr>
               <td>linux_64_numpy1.18python3.7.____cpython</td>
               <td>
                 <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=13678&branchName=master">
@@ -71,13 +70,6 @@ Current build status
                 </a>
               </td>
             </tr><tr>
-              <td>osx_64_numpy1.18python3.6.____cpython</td>
-              <td>
-                <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=13678&branchName=master">
-                  <img src="https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/puma-feedstock?branchName=master&jobName=osx&configuration=osx_64_numpy1.18python3.6.____cpython" alt="variant">
-                </a>
-              </td>
-            </tr><tr>
               <td>osx_64_numpy1.18python3.7.____cpython</td>
               <td>
                 <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=13678&branchName=master">
@@ -96,6 +88,27 @@ Current build status
               <td>
                 <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=13678&branchName=master">
                   <img src="https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/puma-feedstock?branchName=master&jobName=osx&configuration=osx_64_numpy1.19python3.9.____cpython" alt="variant">
+                </a>
+              </td>
+            </tr><tr>
+              <td>win_64_numpy1.18python3.7.____cpython</td>
+              <td>
+                <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=13678&branchName=master">
+                  <img src="https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/puma-feedstock?branchName=master&jobName=win&configuration=win_64_numpy1.18python3.7.____cpython" alt="variant">
+                </a>
+              </td>
+            </tr><tr>
+              <td>win_64_numpy1.18python3.8.____cpython</td>
+              <td>
+                <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=13678&branchName=master">
+                  <img src="https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/puma-feedstock?branchName=master&jobName=win&configuration=win_64_numpy1.18python3.8.____cpython" alt="variant">
+                </a>
+              </td>
+            </tr><tr>
+              <td>win_64_numpy1.19python3.9.____cpython</td>
+              <td>
+                <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=13678&branchName=master">
+                  <img src="https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/puma-feedstock?branchName=master&jobName=win&configuration=win_64_numpy1.19python3.9.____cpython" alt="variant">
                 </a>
               </td>
             </tr>
