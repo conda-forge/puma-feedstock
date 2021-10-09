@@ -30,6 +30,29 @@ together with PuMA's software architecture schematic.
   <img src="https://github.com/nasa/puma/raw/main/doc/source/puma_description.png" width="100%"></img>
 </p>
 
+If you use PuMA in your research, please use the following BibTeX entries to cite it:
+
+```BibTeX
+@article{puma2021,
+  title={Update 3.0 to “PuMA: The Porous Microstructure Analysis software”,(PII: S2352711018300281)},
+  author={Ferguson, Joseph C and Semeraro, Federico and Thornton, John M and Panerai, Francesco and Borner, Arnaud and Mansour, Nagi N},
+  journal={SoftwareX},
+  volume={15},
+  pages={100775},
+  year={2021},
+  publisher={Elsevier}
+}
+@article{puma2018,
+  title={PuMA: The porous microstructure analysis software},
+  author={Ferguson, Joseph C and Panerai, Francesco and Borner, Arnaud and Mansour, Nagi N},
+  journal={SoftwareX},
+  volume={7},
+  pages={81--87},
+  year={2018},
+  publisher={Elsevier}
+}
+```
+
 
 Current build status
 ====================
