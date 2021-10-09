@@ -1,5 +1,5 @@
 {% set name = "puma" %}
-{% set version = "3.1.3" %}
+{% set version = "3.1.4" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/nasa/puma/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: a9576bf36f7b03d3310e55297861d67c5f18a4086caa8ec8ada2d86f4441df81
+  sha256: f3eabbc1ca2c9a622be2b019a9b56540e198a63030fc86ca056abd46e2d6d881
 
 build:
   number: 0
@@ -81,7 +81,7 @@ about:
     <p align="center">
       <img src="https://github.com/nasa/puma/raw/main/doc/source/puma_description.png" width="100%"></img>
     </p>
-    
+
     ### Citing PuMA
     If you use PuMA in your research, please use the following BibTeX entries to cite it:
 
@@ -105,7 +105,7 @@ about:
       publisher={Elsevier}
     }
     ```
-  
+
   doc_url: https://puma-nasa.readthedocs.io/
   dev_url: https://gitlab.com/jcfergus/puma-dev
 
