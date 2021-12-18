@@ -42,7 +42,7 @@ requirements:
     - python
     - {{ pin_compatible('numpy') }}
     - scipy
-    - scikit-image
+    - scikit-image >=0.17
     - matplotlib-base
     - pyevtk
     - pyvista
