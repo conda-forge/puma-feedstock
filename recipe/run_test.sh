@@ -6,8 +6,8 @@ pumaX_testing 1
 rm $CONDA_PREFIX/bin/pumaX_testing
 
 echo "Testing PuMA GUI"
-pumaGUI &
-killall pumaGUI
+# pumaGUI &
+# killall pumaGUI
 
 echo "Testing pumapy"
 cd python/test
