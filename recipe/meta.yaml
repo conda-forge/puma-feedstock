@@ -11,7 +11,6 @@ source:
 
 build:
   number: 4
-  skip: true  # [py<37]
 
 requirements:
   build:
@@ -25,7 +24,7 @@ requirements:
     - {{ cdt('libxext') }}     # [linux]
     - libgomp  # [linux]
     - llvm-openmp  # [osx]
-    - cmake >=3.11.0  # [not win]
+    - cmake  # [not win]
     - make  # [not win]
     - swig  # [not win]
   host:
@@ -37,7 +36,7 @@ requirements:
     - eigen  # [not win]
     - fftw  # [not win]
     - libtiff  # [not win]
-    - qt-main ==5.12.5  # [not win]
+    - qt-main  # [not win]
   run:
     - python
     - {{ pin_compatible('numpy') }}
@@ -48,7 +47,6 @@ requirements:
     - pyvista
     - vtk
     - scikit-umfpack  # [not win]
-    - qt-main ==5.12.5  # [not win]
 
 test:
   imports:
