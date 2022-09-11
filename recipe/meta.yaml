@@ -14,6 +14,7 @@ build:
 
 requirements:
   build:
+    - sysroot_linux-64 2.17  # [linux64]
     - {{ compiler('c') }}  # [not win]
     - {{ compiler('cxx') }}  # [not win]
     - {{ cdt('mesa-libgl-devel') }}  # [linux]
