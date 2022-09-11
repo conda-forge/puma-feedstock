@@ -3,7 +3,7 @@ c_compiler:
 c_compiler_version:
 - '10'
 cdt_name:
-- cos6
+- cos7
 channel_sources:
 - conda-forge
 channel_targets:
@@ -30,6 +30,8 @@ pin_run_as_build:
     max_pin: x.x
 python:
 - 3.9.* *_cpython
+qt_main:
+- '5.15'
 target_platform:
 - linux-64
 zip_keys:
