@@ -10,11 +10,11 @@ source:
   sha256: 22c3f340996502b66503affff2246b1f8b1c36a5e2906ea0307a831098e8d346
 
 build:
-  number: 3
-  skip: true  # [py<37]
+  number: 4
 
 requirements:
   build:
+    - sysroot_linux-64 2.17  # [linux64]
     - {{ compiler('c') }}  # [not win]
     - {{ compiler('cxx') }}  # [not win]
     - {{ cdt('mesa-libgl-devel') }}  # [linux]
@@ -25,7 +25,7 @@ requirements:
     - {{ cdt('libxext') }}     # [linux]
     - libgomp  # [linux]
     - llvm-openmp  # [osx]
-    - cmake >=3.11.0  # [not win]
+    - cmake  # [not win]
     - make  # [not win]
     - swig  # [not win]
   host:
@@ -37,7 +37,7 @@ requirements:
     - eigen  # [not win]
     - fftw  # [not win]
     - libtiff  # [not win]
-    - qt ==5.12.5  # [not win]
+    - qt-main  # [not win]
   run:
     - python
     - {{ pin_compatible('numpy') }}
@@ -48,7 +48,6 @@ requirements:
     - pyvista
     - vtk
     - scikit-umfpack  # [not win]
-    - qt ==5.12.5  # [not win]
 
 test:
   imports:
@@ -113,3 +112,4 @@ about:
 extra:
   recipe-maintainers:
     - fsemerar
+    - Tobias-Fischer
