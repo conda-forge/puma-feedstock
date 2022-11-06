@@ -8,9 +8,11 @@ package:
 source:
   url: https://github.com/nasa/puma/archive/refs/tags/v{{ version }}.tar.gz
   sha256: 22c3f340996502b66503affff2246b1f8b1c36a5e2906ea0307a831098e8d346
+  patches:
+    - force-cythonize.patch
 
 build:
-  number: 4
+  number: 5
 
 requirements:
   build:
@@ -31,6 +33,7 @@ requirements:
   host:
     - xorg-libxfixes  # [linux]
     - python
+    - cython
     - pip
     - setuptools
     - numpy
