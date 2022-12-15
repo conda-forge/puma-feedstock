@@ -1,5 +1,5 @@
 {% set name = "puma" %}
-{% set version = "3.1.7" %}
+{% set version = "3.2.0" %}
 
 package:
   name: {{ name|lower }}
@@ -7,12 +7,10 @@ package:
 
 source:
   url: https://github.com/nasa/puma/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 22c3f340996502b66503affff2246b1f8b1c36a5e2906ea0307a831098e8d346
-  patches:
-    - force-cythonize.patch
+  sha256: 3f1dbe77ca21fd24bc7fcd25c6f6f9bfae9abf6175b7ee8c77b1df8cfd2156cb
 
 build:
-  number: 5
+  number: 0
 
 requirements:
   build:
