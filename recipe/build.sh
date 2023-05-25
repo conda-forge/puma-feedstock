@@ -6,7 +6,7 @@ echo -e "\n### INSTALLING PuMA C++ library ###\n"
 cd install 
 mkdir -p cmake-build-release
 cd cmake-build-release
-cmake -D CONDA_PREFIX=$PREFIX \
+cmake ${CMAKE_ARGS} -D CONDA_PREFIX=$PREFIX \
       -D CMAKE_INSTALL_PREFIX=$PREFIX \
       "$SRC_DIR"/cpp
 make -j$CPU_COUNT
