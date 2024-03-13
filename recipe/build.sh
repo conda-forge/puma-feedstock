@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e  # exit when any command fails
 
+export CMAKE_ARGS="${CMAKE_ARGS} -D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES"
 
 echo -e "\n### INSTALLING PuMA C++ library ###\n"
 cd install 
@@ -22,7 +23,7 @@ PY_VERSION="$(python -c 'import sys; print(sys.version_info[1])')"
 if [ $PY_VERSION -le 7 ]; then
     PY_VERSION="${PY_VERSION}m"
 fi
-cmake -D BUILD_PYTHON_INTERFACE=ON \
+cmake ${CMAKE_ARGS} -D BUILD_PYTHON_INTERFACE=ON \
       -D CMAKE_INSTALL_PREFIX=$PREFIX \
       -D PYTHON_INCLUDE_DIR="$PREFIX"/include/python3.$PY_VERSION \
       -D PYTHON_LIBRARY="$PREFIX"/lib/libpython3.$PY_VERSION$SHLIB_EXT \
