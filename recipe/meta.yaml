@@ -10,7 +10,7 @@ source:
   sha256: babb5eeeec73909f4556acfe0a6a066ce60aa423e4f8dfb1e935227d82d987c3
 
 build:
-  number: 1
+  number: 2
 
 requirements:
   build:
@@ -19,8 +19,8 @@ requirements:
     - cython                                 # [build_platform != target_platform]
     - numpy                                  # [build_platform != target_platform]
     - sysroot_linux-64 2.17  # [linux64]
-    - {{ compiler('c') }}  # [not win]
-    - {{ compiler('cxx') }}  # [not win]
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
     - {{ cdt('mesa-libgl-devel') }}  # [linux]
     - {{ cdt('mesa-dri-drivers') }}  # [linux]
     - {{ cdt('libselinux') }}  # [linux]
