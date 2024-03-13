@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e  # exit when any command fails
 
-export CMAKE_ARGS="${CMAKE_ARGS} -D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES"
+export CMAKE_ARGS="${CMAKE_ARGS} -D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES=1"
 
 echo -e "\n### INSTALLING PuMA C++ library ###\n"
 cd install 
