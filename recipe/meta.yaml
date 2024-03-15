@@ -10,7 +10,8 @@ source:
   sha256: a840c0ac2167aaf5e3ec16ee93d8d92dd694aeac3ace2a0548145d6aacac7302
 
 build:
-  number: 0
+  skip: true  # [py==38]
+  number: 1
 
 requirements:
   build:
@@ -34,7 +35,7 @@ requirements:
     - swig  # [not win]
   host:
     - xorg-libxfixes  # [linux]
-    - python >=3.9
+    - python
     - cython
     - pip
     - setuptools
@@ -44,7 +45,7 @@ requirements:
     - libtiff  # [not win]
     - qt-main  # [not win]
   run:
-    - python >=3.9
+    - python
     - {{ pin_compatible('numpy') }}
     - scipy =1.11
     - scikit-image >=0.17
