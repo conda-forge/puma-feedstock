@@ -34,7 +34,7 @@ requirements:
     - swig  # [not win]
   host:
     - xorg-libxfixes  # [linux]
-    - python
+    - python >=3.9
     - cython
     - pip
     - setuptools
@@ -44,7 +44,7 @@ requirements:
     - libtiff  # [not win]
     - qt-main  # [not win]
   run:
-    - python
+    - python >=3.9
     - {{ pin_compatible('numpy') }}
     - scipy =1.11
     - scikit-image >=0.17
