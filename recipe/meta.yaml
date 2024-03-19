@@ -11,7 +11,7 @@ source:
 
 build:
   skip: true  # [py==38]
-  number: 1
+  number: 2
 
 requirements:
   build:
@@ -50,9 +50,10 @@ requirements:
     - scipy =1.11
     - scikit-image >=0.17
     - matplotlib-base
-    - pyvista
+    - pyvista >=0.40.0
     - vtk
     - scikit-umfpack  # [not win]
+    - ocl-icd-system  # [linux]
 
 test:
   imports:
