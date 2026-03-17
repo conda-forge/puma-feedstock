@@ -40,8 +40,7 @@ requirements:
     - libgl-devel                    # [linux]
   run:
     - python
-    - {{ pin_compatible('numpy') }}
-    - scipy =1.11
+    - scipy
     - scikit-image >=0.17
     - matplotlib-base
     - pyvista >=0.40.0
