@@ -314,6 +314,5 @@ Feedstock Maintainers
 =====================
 
 * [@Tobias-Fischer](https://github.com/Tobias-Fischer/)
-* [@fsemerar](https://github.com/fsemerar/)
 * [@joseph-ferguson](https://github.com/joseph-ferguson/)
 
