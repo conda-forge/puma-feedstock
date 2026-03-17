@@ -10,8 +10,7 @@ source:
   sha256: 25308c057b36a7d394a58f3b16ede621ba739b5c504e51c069edc913f086ad7d
 
 build:
-  skip: true  # [py==38]
-  number: 2
+  number: 3
 
 requirements:
   build:
@@ -19,18 +18,12 @@ requirements:
     - cross-python_{{ target_platform }}     # [build_platform != target_platform]
     - cython                                 # [build_platform != target_platform]
     - numpy                                  # [build_platform != target_platform]
-    - sysroot_linux-64 2.17  # [linux64]
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
-    - {{ cdt('mesa-libgl-devel') }}  # [linux]
-    - {{ cdt('mesa-dri-drivers') }}  # [linux]
-    - {{ cdt('libselinux') }}  # [linux]
-    - {{ cdt('libxdamage') }}  # [linux]
-    - {{ cdt('libxxf86vm') }}  # [linux]
-    - {{ cdt('libxext') }}     # [linux]
+    - {{ stdlib("c") }}
     - libgomp  # [linux]
     - llvm-openmp  # [osx]
-    - cmake  # [not win]
+    - cmake <4  # [not win]
     - make  # [not win]
     - swig  # [not win]
   host:
@@ -44,10 +37,10 @@ requirements:
     - fftw  # [not win]
     - libtiff  # [not win]
     - qt-main  # [not win]
+    - libgl-devel                    # [linux]
   run:
     - python
-    - {{ pin_compatible('numpy') }}
-    - scipy =1.11
+    - scipy
     - scikit-image >=0.17
     - matplotlib-base
     - pyvista >=0.40.0
@@ -117,6 +110,5 @@ about:
 
 extra:
   recipe-maintainers:
-    - fsemerar
     - Tobias-Fischer
     - joseph-ferguson
