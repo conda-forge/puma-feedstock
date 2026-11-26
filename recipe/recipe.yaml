@@ -2,7 +2,7 @@ schema_version: 1
 
 context:
   version: "3.2.2"
-  build: 5
+  build: 6
 
 recipe:
   name: puma-split
