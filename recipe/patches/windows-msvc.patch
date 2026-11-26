@@ -1,0 +1,686 @@
+diff --git a/cpp/CMakeLists.txt b/cpp/CMakeLists.txt
+index 25d544f..83cb7c8 100644
+--- a/cpp/CMakeLists.txt
++++ b/cpp/CMakeLists.txt
+@@ -15,7 +15,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+ set(CMAKE_CXX_EXTENSIONS OFF)
+ 
+ # set cxx flags
+-if(APPLE)
++if(MSVC)
++    # Nothing in PuMA is annotated for export, so every symbol is exported the
++    # way a unix shared library would export it.
++    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp /bigobj /permissive-")
++    add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS)
++    # The solvers pick between std::accumulate (MAC) and libstdc++'s parallel
++    # mode (LINUX) and compile to nothing when neither is defined, so MSVC
++    # takes the standard-library path.
++    add_definitions(-DMAC)
++elseif(APPLE)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Xpreprocessor -fopenmp -Wno-format -Wno-literal-conversion -Wno-register -Wno-return-type")
+     add_definitions(-DMAC) # preprocessor directive
+ elseif(UNIX)
+@@ -56,7 +66,14 @@ add_library(PuMA SHARED ${SOURCES})
+ set_target_properties(PuMA PROPERTIES PUBLIC_HEADER "${HEADERS}")
+ 
+ # Dependencies
+-SET(DEP_LIBS "-ldl -L${CONDA_PREFIX}/lib -ltiff -lfftw3_threads -lfftw3")
++if(WIN32)
++    # fftw on Windows carries its threads API inside fftw3 itself.
++    find_library(PUMA_TIFF_LIBRARY tiff HINTS ${CONDA_PREFIX}/lib REQUIRED)
++    find_library(PUMA_FFTW3_LIBRARY fftw3 HINTS ${CONDA_PREFIX}/lib REQUIRED)
++    SET(DEP_LIBS ${PUMA_TIFF_LIBRARY} ${PUMA_FFTW3_LIBRARY})
++else()
++    SET(DEP_LIBS "-ldl -L${CONDA_PREFIX}/lib -ltiff -lfftw3_threads -lfftw3")
++endif()
+ if(APPLE)
+     SET(DEP_LIBS "${DEP_LIBS} -lomp")
+ endif()
+@@ -66,6 +83,8 @@ target_link_libraries(PuMA ${DEP_LIBS})
+ 
+ # Install PuMA library
+ install(TARGETS PuMA
++        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
++        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+         LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+ 
+diff --git a/cpp/src/export/STL/export_STL_helper.cpp b/cpp/src/export/STL/export_STL_helper.cpp
+index 2be8132..8af2a45 100644
+--- a/cpp/src/export/STL/export_STL_helper.cpp
++++ b/cpp/src/export/STL/export_STL_helper.cpp
+@@ -11,7 +11,7 @@ bool Export_STL_helper::writeSTL(std::vector<puma::Triangle<float> > *Triangles,
+ 
+     int ntris = Triangles->size();
+ 
+-    int fout=open(outfile.c_str(),O_WRONLY|O_TRUNC|O_CREAT,0644);
++    int fout=open(outfile.c_str(),O_WRONLY|O_TRUNC|O_CREAT|PUMA_O_BINARY,PUMA_CREAT_MODE);
+ 
+     if( fout == -1 ) {
+         return false;
+diff --git a/cpp/src/export/STL/fio.h b/cpp/src/export/STL/fio.h
+index 00865b1..4641e91 100644
+--- a/cpp/src/export/STL/fio.h
++++ b/cpp/src/export/STL/fio.h
+@@ -5,11 +5,12 @@
+ #include "err.h"
+ 
+ #include <vector>
+-#include <unistd.h>   // for read/write
++#include "puma_posix_compat.h" // for read/write/open
+ #include <sys/stat.h> // for stat()
+-#include <fcntl.h>    // for open()
++#ifndef _WIN32
+ #include <regex.h>    // for regexp
+ #include <dirent.h>   // for readdir
++#endif
+ 
+ 
+ namespace fio {
+@@ -97,6 +98,8 @@ namespace fio {
+     get(fin, (char*)&buf[0], bytes);
+   }
+ 
++#ifndef _WIN32
++  // pread()/pwrite() are POSIX only, and nothing in PuMA calls these two.
+   inline void pget(int fin, void* buf, size_t bytes, off_t pos)
+   {
+     char* dst = reinterpret_cast<char*>(buf);
+@@ -142,6 +145,7 @@ namespace fio {
+       curpos += res;
+     }
+   }
++#endif
+ 
+   template <typename T>
+   inline void load(std::string fname, std::vector<T>& buf)
+@@ -152,7 +156,7 @@ namespace fio {
+     size_t filesize = statbuf.st_size;
+     size_t nelem = filesize/sizeof(T);
+     buf.resize(nelem);
+-    int fd=open(fname.c_str(),O_RDONLY);
++    int fd=open(fname.c_str(),O_RDONLY|PUMA_O_BINARY);
+     if( fd==-1 ) THROW("open() failed on ["+fname+"]");
+     char* bufptr=(char*)&buf[0];
+     get(fd,bufptr,filesize);
+@@ -169,7 +173,7 @@ namespace fio {
+     size_t readsize = std::min(filesize,userbytes);
+     size_t nelem = readsize/sizeof(T);
+     buf.resize(nelem);
+-    int fd=open(fname.c_str(),O_RDONLY);
++    int fd=open(fname.c_str(),O_RDONLY|PUMA_O_BINARY);
+     if( fd==-1 ) THROW("open() failed on ["+fname+"]");
+     char* bufptr=(char*)&buf[0];
+     get(fd,bufptr,readsize);
+@@ -185,7 +189,7 @@ namespace fio {
+     size_t readsize = std::min(filesize,userbytes);
+     size_t nelem = readsize/sizeof(T);
+     buf.resize(nelem);
+-    int fd=open(fname.c_str(),O_RDONLY);
++    int fd=open(fname.c_str(),O_RDONLY|PUMA_O_BINARY);
+     if( fd==-1 ) THROW("open() failed on ["+fname+"]");
+     off_t got = lseek(fd,offset,SEEK_SET);
+     if( got != offset ) THROW("lseek() error: ["+fname+"]");
+@@ -204,7 +208,7 @@ namespace fio {
+     size_t nelem = filesize/sizeof(T);
+     size_t cursize = buf.size();
+     buf.resize(cursize+nelem);
+-    int fd=open(fname.c_str(),O_RDONLY);
++    int fd=open(fname.c_str(),O_RDONLY|PUMA_O_BINARY);
+     if( fd==-1 ) THROW("open() failed on ["+fname+"]");
+     char* bufptr=(char*)&buf[cursize];
+     get(fd,bufptr,filesize);
+@@ -215,7 +219,7 @@ namespace fio {
+   inline void dump(std::string fname, std::vector<T>& buf)
+   {
+     size_t bytes=buf.size()*sizeof(T);
+-    int fd=open(fname.c_str(),O_WRONLY|O_TRUNC|O_CREAT,0644);
++    int fd=open(fname.c_str(),O_WRONLY|O_TRUNC|O_CREAT|PUMA_O_BINARY,PUMA_CREAT_MODE);
+     if( fd==-1 ) THROW("open() failed on ["+fname+"]");
+     put(fd,buf.data(),bytes);
+     close(fd);
+@@ -223,7 +227,7 @@ namespace fio {
+ 
+   inline void dump(std::string fname, const void* buf, size_t bytes)
+   {
+-    int fd=open(fname.c_str(),O_WRONLY|O_TRUNC|O_CREAT,0644);
++    int fd=open(fname.c_str(),O_WRONLY|O_TRUNC|O_CREAT|PUMA_O_BINARY,PUMA_CREAT_MODE);
+     if( fd==-1 ) THROW("open() failed on ["+fname+"]");
+     put(fd,buf,bytes);
+     close(fd);
+@@ -245,6 +249,8 @@ namespace fio {
+     return statbuf.st_mode & S_IFDIR;
+   }
+ 
++#ifndef _WIN32
++  // Nothing in PuMA calls this, and POSIX regex has no Windows counterpart.
+   inline void getfiles(std::string dir, std::string pat, std::vector<std::string>& fnames)
+   {
+     struct stat sbuf;
+@@ -281,6 +287,7 @@ namespace fio {
+     }
+     closedir(dirobj);
+   }
++#endif
+ 
+ 
+ }
+diff --git a/cpp/src/export/STL/ostr.h b/cpp/src/export/STL/ostr.h
+index 3666ece..8fa0315 100644
+--- a/cpp/src/export/STL/ostr.h
++++ b/cpp/src/export/STL/ostr.h
+@@ -11,11 +11,9 @@
+ #include <set>
+ #include <deque>
+ #include <cmath>
+-#include <sys/types.h>
+ #include <cstdio> // for perror
+ #include <cerrno>
+-#include <unistd.h>
+-#include <fcntl.h>
++#include "puma_posix_compat.h"
+ 
+ 
+ namespace Glx {
+diff --git a/cpp/src/export/STL/swapit.h b/cpp/src/export/STL/swapit.h
+index b5f7e64..6189c96 100644
+--- a/cpp/src/export/STL/swapit.h
++++ b/cpp/src/export/STL/swapit.h
+@@ -1,8 +1,7 @@
+ #ifndef _SWAPIT_H_
+ #define _SWAPIT_H_
+ 
+-#include <sys/types.h> // u_int32_t, etc
+-#include <unistd.h>    // read()
++#include "puma_posix_compat.h" // u_int32_t, read(), etc
+ #include <stdexcept>   // std::runtime_error
+ #include <cstring>    // memcpy()
+ #include <vector>
+diff --git a/cpp/src/export/binary/export_bin.cpp b/cpp/src/export/binary/export_bin.cpp
+index fa62edf..5c686a9 100644
+--- a/cpp/src/export/binary/export_bin.cpp
++++ b/cpp/src/export/binary/export_bin.cpp
+@@ -1,5 +1,7 @@
+ #include "export_bin.h"
+ 
++#include <vector>
++
+ 
+ bool puma::export_bin(Workspace *work, const std::string& fileName) {
+     Export_bin<short> exporter(&(work->matrix),fileName);
+@@ -75,7 +77,8 @@ template<class T> bool Export_bin<T>::exportHelper() {
+ 
+     FILE *file;
+     int n = fileName.length();
+-    char fileName_char_array[n + 1];
++    std::vector<char> fileName_char_buffer(n + 16);
++    char *fileName_char_array = fileName_char_buffer.data();
+     strcpy(fileName_char_array, (fileName+".puma").c_str());
+     file = fopen(fileName_char_array,"w");
+ 
+@@ -182,7 +185,8 @@ bool Export_bin_MatrixVec3::exportHelper() {
+ 
+     FILE *file;
+     int n = fileName.length();
+-    char fileName_char_array[n + 1];
++    std::vector<char> fileName_char_buffer(n + 16);
++    char *fileName_char_array = fileName_char_buffer.data();
+     strcpy(fileName_char_array, (fileName+".puma").c_str());
+     file = fopen(fileName_char_array,"w");
+ 
+diff --git a/cpp/src/export/vtk/export_vtk.cpp b/cpp/src/export/vtk/export_vtk.cpp
+index b675e1b..fe0e14a 100644
+--- a/cpp/src/export/vtk/export_vtk.cpp
++++ b/cpp/src/export/vtk/export_vtk.cpp
+@@ -1,5 +1,7 @@
+ #include "export_vtk.h"
+ 
++#include <vector>
++
+ 
+ bool puma::export_vtk(puma::Matrix<double> *matrix, const std::string& fileName, char fileType, bool unstructured, int numThreads) {
+     Export_vtk_Matrix<double> exporter(matrix,fileName,fileType,unstructured,numThreads);
+@@ -92,7 +94,8 @@ template<class T> bool Export_vtk_Matrix<T>::exportHelper() {
+     char s[256];
+     FILE *file;
+     int n = fileName.length();
+-    char fileName_char_array[n + 1];
++    std::vector<char> fileName_char_buffer(n + 16);
++    char *fileName_char_array = fileName_char_buffer.data();
+     strcpy(fileName_char_array, (fileName).c_str());
+     file = fopen(fileName_char_array,"w");
+     if (file != nullptr) {
+@@ -291,7 +294,8 @@ bool Export_vtk_MatVec3::exportHelper() {
+     char s[256];
+     FILE *file;
+     int n = fileName.length();
+-    char fileName_char_array[n + 1];
++    std::vector<char> fileName_char_buffer(n + 16);
++    char *fileName_char_array = fileName_char_buffer.data();
+     strcpy(fileName_char_array, (fileName).c_str());
+     file = fopen(fileName_char_array,"w");
+     if (file != nullptr) {
+@@ -496,7 +500,8 @@ bool Export_vtk_Workspace::exportHelper() {
+     char s[256];
+     FILE *file;
+     int n = fileName.length();
+-    char fileName_char_array[n + 1];
++    std::vector<char> fileName_char_buffer(n + 16);
++    char *fileName_char_array = fileName_char_buffer.data();
+     strcpy(fileName_char_array, (fileName).c_str());
+     file = fopen(fileName_char_array,"w");
+     if (file != nullptr) {
+diff --git a/cpp/src/filter/median/medianfilter3d.cpp b/cpp/src/filter/median/medianfilter3d.cpp
+index 9278053..8020838 100644
+--- a/cpp/src/filter/median/medianfilter3d.cpp
++++ b/cpp/src/filter/median/medianfilter3d.cpp
+@@ -1,5 +1,7 @@
+ #include "medianfilter3d.h"
+ 
++#include <vector>
++
+ 
+ bool puma::filter_Median3D(Workspace *work, int window_radius, int numThreads) {
+ 
+@@ -185,7 +187,7 @@ short MedianFilter3D::medianValue(long x, long y, long z) {
+     int zSize = zEnd - zStart + 1;
+ 
+     // creating an array that will store all of the values in the window
+-    short totalValues[xSize * ySize * zSize];
++    std::vector<short> totalValues(xSize * ySize * zSize);
+ 
+     //iterating through the window and adding all the elements into the totalValues
+     for( long i=xStart; i<=xEnd; i++ ) {
+@@ -197,7 +199,7 @@ short MedianFilter3D::medianValue(long x, long y, long z) {
+     }
+ 
+     //computing the median value of the window elements
+-    short median = getMedian(totalValues, xSize*ySize*zSize);
++    short median = getMedian(totalValues.data(), xSize*ySize*zSize);
+ 
+     return median;
+ }
+diff --git a/cpp/src/import/3D_Tiff/import_3DTiff.cpp b/cpp/src/import/3D_Tiff/import_3DTiff.cpp
+index abb4990..6e26f39 100644
+--- a/cpp/src/import/3D_Tiff/import_3DTiff.cpp
++++ b/cpp/src/import/3D_Tiff/import_3DTiff.cpp
+@@ -12,6 +12,11 @@ bool puma::import_3DTiff(Workspace *work, std::string fileName, int xMin, int xM
+ }
+ 
+ 
++#ifdef _WIN32
++#define popen _popen
++#define pclose _pclose
++#endif
++
+ std::string exec(const char* cmd) {
+     char buffer[128];
+     std::string result = "";
+@@ -31,9 +36,11 @@ std::string exec(const char* cmd) {
+ 
+ std::string puma::path_to_example_file(std::string example_filename){
+ 
+-    std::string command = "python -c 'import pumapy; print(pumapy.path_to_example_file(\"";
++    // Double quotes outside and single quotes inside, because cmd.exe does not
++    // treat single quotes as quoting; POSIX shells accept either.
++    std::string command = "python -c \"import pumapy; print(pumapy.path_to_example_file('";
+     command += example_filename;
+-    command += "\"))'";
++    command += "'))\"";
+ 
+     std::string out = exec(command.c_str());
+ 
+diff --git a/cpp/src/import/3D_Tiff/import_3DTiff_Workspace.cpp b/cpp/src/import/3D_Tiff/import_3DTiff_Workspace.cpp
+index ad636f3..28b2d10 100644
+--- a/cpp/src/import/3D_Tiff/import_3DTiff_Workspace.cpp
++++ b/cpp/src/import/3D_Tiff/import_3DTiff_Workspace.cpp
+@@ -59,8 +59,8 @@ bool Import_3DTiff_Workspace::import() {
+ }
+ 
+ bool Import_3DTiff_Workspace::sizeOfDomain() {
+-    uint32 bitsPerSample = 0;
+-    uint16 rgb_check;
++    uint32_t bitsPerSample = 0;
++    uint16_t rgb_check;
+ 
+     TIFF* input_Image;
+     TIFFSetWarningHandler(nullptr);
+diff --git a/cpp/src/import/3D_Tiff/import_3DTiff_Workspace.h b/cpp/src/import/3D_Tiff/import_3DTiff_Workspace.h
+index be46f32..49c3ca2 100644
+--- a/cpp/src/import/3D_Tiff/import_3DTiff_Workspace.h
++++ b/cpp/src/import/3D_Tiff/import_3DTiff_Workspace.h
+@@ -32,7 +32,7 @@ private:
+     int Y{};
+     int Z{};
+     std::string fileName;
+-    uint32 numThreads;
++    uint32_t numThreads;
+     bool sizeOfDomain();
+     bool importHelper();
+ 
+diff --git a/cpp/src/import/binary/import_bin.cpp b/cpp/src/import/binary/import_bin.cpp
+index 4c52bf7..2d51645 100644
+--- a/cpp/src/import/binary/import_bin.cpp
++++ b/cpp/src/import/binary/import_bin.cpp
+@@ -1,5 +1,7 @@
+ #include "import_bin.h"
+ 
++#include <vector>
++
+ #include <utility>
+ 
+ 
+@@ -74,7 +76,8 @@ template<class T> bool Import_bin<T>::importHelper() {
+ 
+     FILE *pfile;
+     int n = fileName.length();
+-    char fileName_char_array[n + 1];
++    std::vector<char> fileName_char_buffer(n + 16);
++    char *fileName_char_array = fileName_char_buffer.data();
+     strcpy(fileName_char_array, fileName.c_str());
+     pfile = fopen(fileName_char_array,"rb");
+ 
+@@ -199,7 +202,8 @@ bool Import_bin_MatrixVec3::importHelper() {
+ 
+     FILE *pfile;
+     int n = fileName.length();
+-    char fileName_char_array[n + 1];
++    std::vector<char> fileName_char_buffer(n + 16);
++    char *fileName_char_array = fileName_char_buffer.data();
+     strcpy(fileName_char_array, fileName.c_str());
+     pfile = fopen(fileName_char_array,"rb");
+ 
+diff --git a/cpp/src/materialproperties/orientation/raycasting/raycasting.cpp b/cpp/src/materialproperties/orientation/raycasting/raycasting.cpp
+index 96f2e77..5041792 100644
+--- a/cpp/src/materialproperties/orientation/raycasting/raycasting.cpp
++++ b/cpp/src/materialproperties/orientation/raycasting/raycasting.cpp
+@@ -1,5 +1,7 @@
+ #include "raycasting.h"
+ 
++#include <limits>
++
+ 
+ ////// PARTICLE METHOD //////
+ 
+@@ -196,7 +198,7 @@ void RayCasting::assignWalkersDirection(){
+     std::vector<int> maxAngle(sphericalWalkers[0].size(),0);
+ 
+ #pragma omp parallel for
+-    for(unsigned int i=0;i<sphericalWalkers[0].size();i++) {
++    for(int i=0;i<(int)sphericalWalkers[0].size();i++) {
+         for(unsigned int j=0;j<sphericalWalkers[0].size();j++) {
+             double theta = acos(sphericalWalkers[0][i].dir.x * sphericalWalkers[0][j].dir.x + sphericalWalkers[0][i].dir.y * sphericalWalkers[0][j].dir.y + sphericalWalkers[0][i].dir.z * sphericalWalkers[0][j].dir.z) * (180./M_PI);
+             double phi = acos(sphericalWalkers[0][i].dir.x * (-sphericalWalkers[0][j].dir.x) + sphericalWalkers[0][i].dir.y * (-sphericalWalkers[0][j].dir.y) + sphericalWalkers[0][i].dir.z * (-sphericalWalkers[0][j].dir.z)) * (180./M_PI);
+@@ -427,9 +429,9 @@ std::vector<double> RayCasting::nextEdgeIntersection(int i, int ind){
+     tZ = (nZ-sphericalWalkers[ind][i].pos.z)/sphericalWalkers[ind][i].dir.z; // time to get to z wall
+ 
+     // For the cases in which the angle is exactly 0 (preventing Inf or Nan)
+-    if(tX != tX || tX  == +1.0/0.0 || tX  == -1.0/0.0) tX = 1e10;
+-    if(tY != tY || tY  == +1.0/0.0 || tY  == -1.0/0.0) tY = 1e10;
+-    if(tZ != tZ || tZ  == +1.0/0.0 || tZ  == -1.0/0.0) tZ = 1e10;
++    if(tX != tX || tX  == +std::numeric_limits<double>::infinity() || tX  == -std::numeric_limits<double>::infinity()) tX = 1e10;
++    if(tY != tY || tY  == +std::numeric_limits<double>::infinity() || tY  == -std::numeric_limits<double>::infinity()) tY = 1e10;
++    if(tZ != tZ || tZ  == +std::numeric_limits<double>::infinity() || tZ  == -std::numeric_limits<double>::infinity()) tZ = 1e10;
+ 
+     // Step 3: Setting the next position of the sphericalWalker based on the nearest interface
+     if(tX<=tY && tX<=tZ){ // if the x wall is the closest
+diff --git a/cpp/src/utilities/logger/logger.cpp b/cpp/src/utilities/logger/logger.cpp
+index 5136d62..14f5601 100644
+--- a/cpp/src/utilities/logger/logger.cpp
++++ b/cpp/src/utilities/logger/logger.cpp
+@@ -1,5 +1,9 @@
+ #include "logger.h"
+ 
++#ifdef _WIN32
++#include <filesystem>
++#endif
++
+ 
+ puma::Logger::Logger() {
+     log="";
+@@ -102,6 +106,17 @@ bool puma::Logger::generateDirectory(std::string directoryPath) {
+         return true;
+     }
+ 
++#ifdef _WIN32
++    // cmd.exe has no "mkdir -p": it would create a directory called "-p".
++    std::error_code ec;
++    std::filesystem::create_directories(directoryPath, ec);
++    if (ec)
++    {
++        printf("Error creating directory\n");
++        return false;
++    }
++    return true;
++#else
+     int dir_err;
+ 
+     std::string str = "mkdir -p ";
+@@ -114,6 +129,7 @@ bool puma::Logger::generateDirectory(std::string directoryPath) {
+         return false;
+     }
+     return true;
++#endif
+ }
+ 
+ void puma::Logger::appendLogSection(std::string sectionName) {
+diff --git a/cpp/src/utilities/logger/logger.h b/cpp/src/utilities/logger/logger.h
+index 4e0a12f..3df7f4d 100644
+--- a/cpp/src/utilities/logger/logger.h
++++ b/cpp/src/utilities/logger/logger.h
+@@ -5,7 +5,7 @@
+ 
+ #include <cstring>
+ #include <ctime>
+-#include <unistd.h>
++#include "puma_posix_compat.h"
+ #define GetCurrentDir getcwd
+ 
+ 
+diff --git a/cpp/src/utilities/primitives/pstring.h b/cpp/src/utilities/primitives/pstring.h
+index 3d2fdc5..bf95c38 100644
+--- a/cpp/src/utilities/primitives/pstring.h
++++ b/cpp/src/utilities/primitives/pstring.h
+@@ -10,7 +10,7 @@
+ #include <cstdio>
+ #include <cstring>
+ #include <cerrno>
+-#include <unistd.h>
++#include "puma_posix_compat.h"
+ 
+ 
+ namespace puma {
+diff --git a/cpp/src/utilities/puma_posix_compat.h b/cpp/src/utilities/puma_posix_compat.h
+new file mode 100644
+index 0000000..8d0a69f
+--- /dev/null
++++ b/cpp/src/utilities/puma_posix_compat.h
+@@ -0,0 +1,42 @@
++#ifndef PUMA_POSIX_COMPAT_H
++#define PUMA_POSIX_COMPAT_H
++
++// PuMA was written against POSIX. This header is the one place that maps the
++// handful of POSIX names it uses onto what the Microsoft C runtime provides,
++// so the rest of the sources can stay as they are.
++
++#include <sys/types.h>
++#include <fcntl.h>
++
++#ifdef _WIN32
++
++#include <BaseTsd.h>
++#include <cstdint>
++#include <direct.h>  // getcwd
++#include <io.h>      // open, read, write, lseek, close
++#include <sys/stat.h> // _S_IREAD, _S_IWRITE
++
++typedef SSIZE_T ssize_t;
++typedef uint16_t u_int16_t;
++typedef uint32_t u_int32_t;
++typedef uint64_t u_int64_t;
++
++#ifndef __PRETTY_FUNCTION__
++#define __PRETTY_FUNCTION__ __FUNCSIG__
++#endif
++
++// The CRT opens files in text mode unless told otherwise, which would rewrite
++// every 0x0A byte of a binary STL file, and it rejects POSIX permission bits.
++#define PUMA_O_BINARY _O_BINARY
++#define PUMA_CREAT_MODE (_S_IREAD | _S_IWRITE)
++
++#else
++
++#include <unistd.h>
++
++#define PUMA_O_BINARY 0
++#define PUMA_CREAT_MODE 0644
++
++#endif
++
++#endif // PUMA_POSIX_COMPAT_H
+diff --git a/cpp/src/utilities/timer/timer.cpp b/cpp/src/utilities/timer/timer.cpp
+index cdd0b37..a70f1ed 100644
+--- a/cpp/src/utilities/timer/timer.cpp
++++ b/cpp/src/utilities/timer/timer.cpp
+@@ -1,5 +1,14 @@
+ #include "timer.h"
+ 
++#include <chrono>
++
++// Milliseconds since the epoch. gettimeofday() is POSIX only; the system clock
++// reads the same wall time everywhere.
++static double puma_now_ms() {
++    return std::chrono::duration<double, std::milli>(
++        std::chrono::system_clock::now().time_since_epoch()).count();
++}
++
+ 
+ puma::Timer::Timer()
+ {
+@@ -9,16 +18,12 @@ puma::Timer::Timer()
+ 
+ 
+ bool puma::Timer::reset(){
+-    struct timeval tim11;
+-    gettimeofday(&tim11, NULL);
+-    currentTime=(tim11.tv_sec + (tim11.tv_usec / 1000000.0)) * 1000.0;
++    currentTime=puma_now_ms();
+     return true;
+ }
+ 
+ double puma::Timer::elapsed(){
+-    struct timeval tim11;
+-    gettimeofday(&tim11, NULL);
+-    double newTime=(tim11.tv_sec + (tim11.tv_usec / 1000000.0)) * 1000.0;
++    double newTime=puma_now_ms();
+ 
+     return (newTime-currentTime)/1000.0;
+ 
+diff --git a/cpp/src/utilities/timer/timer.h b/cpp/src/utilities/timer/timer.h
+index ef66975..feb6865 100644
+--- a/cpp/src/utilities/timer/timer.h
++++ b/cpp/src/utilities/timer/timer.h
+@@ -1,7 +1,6 @@
+ #ifndef PUMATIMER_H
+ #define PUMATIMER_H
+ 
+-#include <sys/time.h>
+ #include <ctime>
+ 
+ 
+--- a/gui/build/pumaGUI.pro
++++ b/gui/build/pumaGUI.pro
+@@ -12,7 +12,13 @@
+ INCLUDEPATH += $${BUILD_PREFIX}/include/eigen3/Eigen
+ INCLUDEPATH += $${INSTALL_PREFIX}/include
+ 
+-LIBS += -L$${BUILD_PREFIX}/lib -ltiff -lfftw3_threads -lfftw3
++win32 {
++    # fftw on Windows carries its threads API inside fftw3 itself.
++    LIBS += -L$${BUILD_PREFIX}/lib -ltiff -lfftw3
++    DEFINES += _USE_MATH_DEFINES NOMINMAX _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_WARNINGS
++} else {
++    LIBS += -L$${BUILD_PREFIX}/lib -ltiff -lfftw3_threads -lfftw3
++}
+ mac{LIBS += -lomp}
+ unix:!macx {LIBS += -lgomp}
+ LIBS += -L$${INSTALL_PREFIX}/lib -lPuMA
+@@ -28,44 +34,46 @@
+ unix:QMAKE_CXXFLAGS += -fsigned-char
+ 
+ 
++# Bare wildcards in these lists are left unexpanded by qmake on Windows
++# ("Failure to find: ../src/*.cpp"), so they are globbed with files().
+ SOURCES += \
+-        ../src/*.cpp \
+-        ../src/Export/*.cpp \
+-        ../src/Generate/*.cpp \
+-        ../src/Import/*.cpp \
+-        ../src/Log/*.cpp \
+-        ../src/MaterialProperties/*.cpp \
+-        ../src/Process/*.cpp \
+-        ../src/Utilities/*.cpp \
+-        ../src/Utilities/qcustomplot/*.cpp \
+-        ../src/Plugins/*.cpp \
+-        ../src/Visualization/*.cpp \
++        $$files(../src/*.cpp) \
++        $$files(../src/Export/*.cpp) \
++        $$files(../src/Generate/*.cpp) \
++        $$files(../src/Import/*.cpp) \
++        $$files(../src/Log/*.cpp) \
++        $$files(../src/MaterialProperties/*.cpp) \
++        $$files(../src/Process/*.cpp) \
++        $$files(../src/Utilities/*.cpp) \
++        $$files(../src/Utilities/qcustomplot/*.cpp) \
++        $$files(../src/Plugins/*.cpp) \
++        $$files(../src/Visualization/*.cpp) \
+ 
+ 
+ HEADERS += \
+-        ../src/*.h  \
+-        ../src/Export/*.h \
+-        ../src/Generate/*.h \
+-        ../src/Import/*.h \
+-        ../src/Log/*.h \
+-        ../src/MaterialProperties/*.h \
+-        ../src/Process/*.h \
+-        ../src/Utilities/*.h \
+-        ../src/Utilities/qcustomplot/*.h \
+-        ../src/Plugins/*.h \
+-        ../src/Visualization/*.h \
++        $$files(../src/*.h)  \
++        $$files(../src/Export/*.h) \
++        $$files(../src/Generate/*.h) \
++        $$files(../src/Import/*.h) \
++        $$files(../src/Log/*.h) \
++        $$files(../src/MaterialProperties/*.h) \
++        $$files(../src/Process/*.h) \
++        $$files(../src/Utilities/*.h) \
++        $$files(../src/Utilities/qcustomplot/*.h) \
++        $$files(../src/Plugins/*.h) \
++        $$files(../src/Visualization/*.h) \
+ 
+ 
+ FORMS += \
+-        ../src/*.ui \
+-        ../src/Export/*.ui \
+-        ../src/Generate/*.ui \
+-        ../src/Import/*.ui \
+-        ../src/Log/*.ui \
+-        ../src/MaterialProperties/*.ui \
+-        ../src/Process/*.ui \
+-        ../src/Plugins/*.ui \
+-        ../src/Visualization/*.ui \
++        $$files(../src/*.ui) \
++        $$files(../src/Export/*.ui) \
++        $$files(../src/Generate/*.ui) \
++        $$files(../src/Import/*.ui) \
++        $$files(../src/Log/*.ui) \
++        $$files(../src/MaterialProperties/*.ui) \
++        $$files(../src/Process/*.ui) \
++        $$files(../src/Plugins/*.ui) \
++        $$files(../src/Visualization/*.ui) \
+ 
+ RESOURCES += \
+         ../extras/resource.qrc

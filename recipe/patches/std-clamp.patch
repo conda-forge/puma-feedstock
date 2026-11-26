@@ -1,0 +1,27 @@
+diff --git a/cpp/src/export/STL/ostr.h b/cpp/src/export/STL/ostr.h
+index 731f951..3666ece 100644
+--- a/cpp/src/export/STL/ostr.h
++++ b/cpp/src/export/STL/ostr.h
+@@ -1,6 +1,7 @@
+ #ifndef _OSTR_H_
+ #define _OSTR_H_
+ 
++#include <algorithm>
+ #include <iostream>
+ #include <iomanip>
+ #include <vector>
+@@ -17,14 +18,6 @@
+ #include <fcntl.h>
+ 
+ 
+-namespace std {
+-  template <typename T>
+-  inline T clamp (T val, T lo, T hi)
+-  {
+-    return std::max(lo,std::min(val,hi));
+-  }
+-}
+-
+ namespace Glx {
+   inline double r2d(double r) {return r*57.29577951308232087679815481411;}
+   inline double d2r(double d) {return d*0.01745329251994329576923690768;}

@@ -6,6 +6,10 @@ export CXXFLAGS="${CXXFLAGS-} -D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES"
 echo -e "\n### INSTALLING PuMA GUI ###\n"
 # The C++ library the GUI links against comes from the puma package in the host
 # environment, so BUILD_PREFIX and INSTALL_PREFIX both point at the prefix.
+# Replace the vendored QCustomPlot 2.0.0, which predates Qt 6, with the 2.1.1
+# release the recipe fetches as a second source.
+cp "$SRC_DIR"/qcustomplot-2.1.1/qcustomplot.h "$SRC_DIR"/qcustomplot-2.1.1/qcustomplot.cpp \
+   "$SRC_DIR"/qcustomplot-2.1.1/GPL.txt "$SRC_DIR"/gui/src/Utilities/qcustomplot/
 cd "$SRC_DIR"/gui/build
 # workarounds for openGL and g++ on linux
 if [ "$(uname)" != "Darwin" ]; then
@@ -18,7 +22,7 @@ if [ "$(uname)" != "Darwin" ]; then
       ln -sf "$(command -v "${GXX}")" g++
       export PATH="${PWD}:${PATH}"
 fi
-qmake \
+qmake6 \
       BUILD_PREFIX=$PREFIX \
       INSTALL_PREFIX=$PREFIX
 make -j$CPU_COUNT

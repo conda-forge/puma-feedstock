@@ -1,0 +1,29 @@
+--- a/cpp/CMakeLists.txt
++++ b/cpp/CMakeLists.txt
+@@ -23,6 +23,12 @@
+     add_definitions(-DLINUX) # preprocessor directive
+ endif()
+ 
++# The marching cubes lookup tables store -1 in plain char arrays. char is
++# unsigned on aarch64 and ppc64le, where that is a narrowing error.
++if(UNIX)
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsigned-char")
++endif()
++
+ # include directories
+ MACRO(HEADER_DIRECTORIES return_list)
+     FILE(GLOB_RECURSE new_list src/*.h)
+--- a/gui/build/pumaGUI.pro
++++ b/gui/build/pumaGUI.pro
+@@ -23,7 +23,11 @@
+ # CONFIG carries the standard through to every compile qmake emits.
+ CONFIG += c++17
+ 
++# The libPuMA headers store -1 in plain char arrays, and char is unsigned on
++# aarch64 and ppc64le.
++unix:QMAKE_CXXFLAGS += -fsigned-char
+ 
++
+ SOURCES += \
+         ../src/*.cpp \
+         ../src/Export/*.cpp \
