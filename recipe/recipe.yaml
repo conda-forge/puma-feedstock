@@ -2,7 +2,7 @@ schema_version: 1
 
 context:
   version: "3.2.2"
-  build: 5
+  build: 6
 
 recipe:
   name: puma-split
@@ -35,6 +35,11 @@ source:
       # few POSIX names in use, binary-mode file I/O for STL export, and Windows
       # branches in the cmake and qmake projects.
       - patches/windows-msvc.patch
+      # TexGen links its python module against libpython. From python 3.15 on,
+      # conda-forge's python no longer brings the shared libpython into the
+      # host environment, so that link has nothing to find. An extension module
+      # should not link it on unix in the first place.
+      - patches/texgen-no-libpython.patch
   # PuMA vendors QCustomPlot 2.0.0, which predates Qt 6. 2.1.1 is a drop-in
   # replacement that builds against Qt 6. rattler-build refuses to unpack one
   # source over another, so it lands next to the tree and the GUI build script

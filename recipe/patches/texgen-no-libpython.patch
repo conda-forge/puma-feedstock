@@ -1,0 +1,29 @@
+--- a/install/TexGen/Python/CMakeLists.txt
++++ b/install/TexGen/Python/CMakeLists.txt
+@@ -43,15 +43,18 @@
+ #			LINK_FLAGS "-Xlinker")
+ 	ENDIF(UNIX)
+ 
+-	# Link to TexGenCore and Python
+-	TARGET_LINK_LIBRARIES(_Core
+-	TexGenCore
+-	optimized ${PYTHON_LIBRARIES})
++	# Link to TexGenCore. An extension module must not link libpython on unix:
++	# the interpreter that imports it already provides those symbols, and the
++	# link flags above leave them to be resolved at load time.
++	TARGET_LINK_LIBRARIES(_Core TexGenCore)
++	IF(WIN32)
++		TARGET_LINK_LIBRARIES(_Core optimized ${PYTHON_LIBRARIES})
+ 
+-	# If building the debug version link to the python debug library
+-	IF(PYTHON_DEBUG_LIBRARIES)
+-		TARGET_LINK_LIBRARIES(_Core debug ${PYTHON_DEBUG_LIBRARIES})
+-	ENDIF(PYTHON_DEBUG_LIBRARIES)
++		# If building the debug version link to the python debug library
++		IF(PYTHON_DEBUG_LIBRARIES)
++			TARGET_LINK_LIBRARIES(_Core debug ${PYTHON_DEBUG_LIBRARIES})
++		ENDIF(PYTHON_DEBUG_LIBRARIES)
++	ENDIF(WIN32)
+ 	
+ 	SET(PYTHON_MODULES "'Abaqus', 'Ansys', 'Completer', 'FlowTex', 'GridFile', 'WiseTex'")
+ 	IF(BUILD_RENDERER)
